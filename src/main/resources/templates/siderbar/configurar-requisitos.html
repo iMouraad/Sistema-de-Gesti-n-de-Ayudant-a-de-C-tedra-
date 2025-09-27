@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <h1 class="text-2xl font-bold mb-6">Configurar Requisitos de Ayudantía</h1>
+
+    <!-- Formulario para Añadir/Editar Requisitos -->
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+        <h2 class="text-xl font-semibold mb-4" id="form-title">Añadir Nuevo Requisito</h2>
+        <form id="requisito-form">
+            <input type="hidden" id="requisito-id"/>
+            <div class="mb-4">
+                <label for="requisito-descripcion" class="block text-gray-700 text-sm font-bold mb-2">Descripción:</label>
+                <textarea id="requisito-descripcion" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required></textarea>
+            </div>
+            <div class="flex items-center justify-between">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Guardar</button>
+                <button type="button" id="cancel-edit-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline hidden">Cancelar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Requisitos -->
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-4">Requisitos Actuales</h2>
+        <ul id="requisitos-list" class="space-y-4">
+            <li th:each="req : ${requisitos}" th:id="'req-' + ${req.id}" class="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                <p class="text-gray-700" th:text="${req.descripcion}"></p>
+                <div class="flex space-x-2">
+                    <button th:data-id="${req.id}" th:data-descripcion="${req.descripcion}" onclick="editRequisito(this)" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
+                    <button th:onclick="'deleteRequisito(' + ${req.id} + ')'" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <script>
+        const API_URL = '/api/requisitos';
+
+        const form = document.getElementById('requisito-form');
+        const formTitle = document.getElementById('form-title');
+        const requisitoId = document.getElementById('requisito-id');
+        const requisitoDescripcion = document.getElementById('requisito-descripcion');
+        const cancelBtn = document.getElementById('cancel-edit-btn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = requisitoId.value;
+            const descripcion = requisitoDescripcion.value;
+            const dto = { id: id || null, descripcion: descripcion, activo: true };
+
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${API_URL}/${id}` : API_URL;
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dto)
+                });
+
+                if (!response.ok) throw new Error('Error al guardar el requisito');
+                
+                // Recargar la vista para ver los cambios
+                handleLinkClick('configuracion-requisitos', false);
+                alert('Requisito guardado con éxito.');
+
+            } catch (error) {
+                console.error(error);
+                alert(error.message);
+            }
+        });
+
+        function editRequisito(button) {
+            const id = button.getAttribute('data-id');
+            const descripcion = button.getAttribute('data-descripcion');
+            
+            formTitle.textContent = 'Editar Requisito';
+            requisitoId.value = id;
+            requisitoDescripcion.value = descripcion;
+            cancelBtn.classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function resetForm() {
+            formTitle.textContent = 'Añadir Nuevo Requisito';
+            requisitoId.value = '';
+            requisitoDescripcion.value = '';
+            cancelBtn.classList.add('hidden');
+        }
+
+        cancelBtn.addEventListener('click', resetForm);
+
+        async function deleteRequisito(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este requisito?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Error al eliminar el requisito');
+                
+                document.getElementById(`req-${id}`).remove();
+                alert('Requisito eliminado con éxito.');
+
+            } catch (error) {
+                console.error(error);
+                alert(error.message);
+            }
+        }
+    </script>
+</div>
+</body>
+</html>

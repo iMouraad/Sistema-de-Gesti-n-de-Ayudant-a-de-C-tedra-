@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content">
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Agendar Pruebas de Oposición</h1>
+    
+    <div class="bg-white rounded-lg shadow overflow-x-auto">
+      <table class="min-w-full w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estudiante</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cédula</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asignatura</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Promedio</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr th:each="postulacion : ${postulaciones}" class="postulacion-row">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900 student-name" th:text="${postulacion.estudiante.usuario.nombres + ' ' + postulacion.estudiante.usuario.apellidos}"></div>
+                    <div class="text-sm text-gray-500" th:text="${postulacion.estudiante.carrera.carrera}"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${postulacion.estudiante.usuario.cedula}"></td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 subject-name" th:text="${postulacion.asignatura.nombre}"></td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${#numbers.formatDecimal(postulacion.estudiante.promedioGeneral, 1, 2)}"></td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <button th:data-postulacion-id="${postulacion.idPostulacion}" class="agendar-btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+                <i class="fas fa-calendar-alt mr-2"></i>Agendar Prueba
+              </button>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(postulaciones)}">
+            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No hay postulaciones aprobadas pendientes de agendamiento.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal para Agendar Prueba -->
+  <div id="agendar-prueba-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-2xl">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Agendar Prueba de Oposición</h2>
+        
+        <form id="agendar-form" action="/coordinador/agendar-prueba" method="post">
+            <input type="hidden" id="postulacionId" name="postulacionId" />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Estudiante</label>
+                    <p id="modal-student-name" class="mt-1 text-gray-900 font-semibold"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Asignatura</label>
+                    <p id="modal-subject-name" class="mt-1 text-gray-900 font-semibold"></p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="tema" class="block text-sm font-medium text-gray-700">Tema de Exposición</label>
+                <input type="text" name="tema" id="tema" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+            </div>
+
+            <div class="mb-4">
+                <label for="descripcion" class="block text-sm font-medium text-gray-700">Descripción</label>
+                <textarea name="descripcion" id="descripcion" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="fechaHora" class="block text-sm font-medium text-gray-700">Fecha y Hora</label>
+                    <input type="datetime-local" name="fechaHora" id="fechaHora" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                </div>
+                <div>
+                    <label for="lugar" class="block text-sm font-medium text-gray-700">Lugar o Enlace</label>
+                    <input type="text" name="lugar" id="lugar" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Asignar Tribunal</label>
+                <div class="mt-2 max-h-40 overflow-y-auto border border-gray-300 rounded-md p-2">
+                    <div th:each="docente : ${docentes}" class="flex items-center">
+                        <input th:id="'docente-' + ${docente.id}" name="tribunalIds" th:value="${docente.id}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <label th:for="'docente-' + ${docente.id}" class="ml-3 block text-sm text-gray-700" th:text="${docente.usuario.nombres + ' ' + docente.usuario.apellidos}"></label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-4">
+              <button type="button" id="cancel-modal-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Cancelar</button>
+              <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">Confirmar Agendamiento</button>
+            </div>
+        </form>
+      </div>
+  </div>
+
+  <script th:inline="javascript">
+    const modal = document.getElementById('agendar-prueba-modal');
+    if (modal) {
+        const cancelBtn = document.getElementById('cancel-modal-btn');
+        const panel = document.getElementById('pruebas-oposicion-panel');
+        const agendarBtns = panel.querySelectorAll('.agendar-btn');
+        
+        const postulacionIdInput = document.getElementById('postulacionId');
+        const studentNameP = document.getElementById('modal-student-name');
+        const subjectNameP = document.getElementById('modal-subject-name');
+
+        function showModal() {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function hideModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        agendarBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const postulacionId = btn.dataset.postulacionId;
+                const row = btn.closest('.postulacion-row');
+                const studentName = row.querySelector('.student-name').textContent;
+                const subjectName = row.querySelector('.subject-name').textContent;
+
+                postulacionIdInput.value = postulacionId;
+                studentNameP.textContent = studentName;
+                subjectNameP.textContent = subjectName;
+                
+                showModal();
+            });
+        });
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', hideModal);
+        }
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                hideModal();
+            }
+        });
+    }
+  </script>
+</div>
+
+</body>
+</html>

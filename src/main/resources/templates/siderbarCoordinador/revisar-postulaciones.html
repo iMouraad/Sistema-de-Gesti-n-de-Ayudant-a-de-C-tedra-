@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content">
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Revisión de Postulaciones</h1>
+    
+    <div th:if="${postulaciones.isEmpty()}" class="bg-white p-6 rounded-lg shadow-md text-center">
+        <p class="text-gray-600">No hay postulaciones para revisar en este momento.</p>
+    </div>
+
+    <div th:unless="${postulaciones.isEmpty()}" class="bg-white rounded-lg shadow-md overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estudiante</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asignatura</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documentos</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="postulaciones-tbody" class="bg-white divide-y divide-gray-200">
+                <tr th:each="postulacion : ${postulaciones}" th:id="'postulacion-row-' + ${postulacion.idPostulacion}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900" th:text="${postulacion.estudiante.usuario.nombres + ' ' + postulacion.estudiante.usuario.apellidos}"></div>
+                        <div class="text-sm text-gray-500" th:text="${postulacion.estudiante.usuario.email}"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900" th:text="${postulacion.asignatura.nombre}"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="status-badge px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                              th:text="${postulacion.estadoPostulacion}"
+                              th:classappend="${postulacion.estadoPostulacion.name() == 'EN_REVISION' ? 'bg-yellow-100 text-yellow-800' : 
+                                               (postulacion.estadoPostulacion.name() == 'APROBADO' ? 'bg-green-100 text-green-800' : 
+                                               (postulacion.estadoPostulacion.name() == 'RECHAZADO' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'))}">
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex flex-col space-y-2">
+                            <!-- Solicitud -->
+                            <div th:if="${postulacion.rutaSolicitud}" class="flex items-center space-x-2">
+                                <input type="checkbox" class="doc-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                       th:checked="${postulacion.isDocumentoValido('solicitud')}"
+                                       th:data-postulacion-id="${postulacion.idPostulacion}"
+                                       data-tipo-documento="solicitud">
+                                <a th:href="@{'/uploads/' + ${postulacion.rutaSolicitud}}" target="_blank" class="text-blue-600 hover:text-blue-900 flex items-center" title="Solicitud de Postulación">
+                                    <i class="fas fa-file-alt fa-lg w-5"></i> <span class="ml-2 text-xs">Solicitud</span>
+                                </a>
+                            </div>
+                            <!-- Cédula -->
+                            <div th:if="${postulacion.rutaCedula}" class="flex items-center space-x-2">
+                                <input type="checkbox" class="doc-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                       th:checked="${postulacion.isDocumentoValido('cedula')}"
+                                       th:data-postulacion-id="${postulacion.idPostulacion}"
+                                       data-tipo-documento="cedula">
+                                <a th:href="@{'/uploads/' + ${postulacion.rutaCedula}}" target="_blank" class="text-blue-600 hover:text-blue-900 flex items-center" title="Copia de Cédula">
+                                    <i class="fas fa-id-card fa-lg w-5"></i> <span class="ml-2 text-xs">Cédula</span>
+                                </a>
+                            </div>
+                            <!-- Matrícula -->
+                            <div th:if="${postulacion.rutaMatricula}" class="flex items-center space-x-2">
+                                <input type="checkbox" class="doc-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                       th:checked="${postulacion.isDocumentoValido('matricula')}"
+                                       th:data-postulacion-id="${postulacion.idPostulacion}"
+                                       data-tipo-documento="matricula">
+                                <a th:href="@{'/uploads/' + ${postulacion.rutaMatricula}}" target="_blank" class="text-blue-600 hover:text-blue-900 flex items-center" title="Certificado de Matrícula">
+                                    <i class="fas fa-file-invoice fa-lg w-5"></i> <span class="ml-2 text-xs">Matrícula</span>
+                                </a>
+                            </div>
+                            <!-- Historial -->
+                            <div th:if="${postulacion.rutaHistorial}" class="flex items-center space-x-2">
+                                <input type="checkbox" class="doc-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                       th:checked="${postulacion.isDocumentoValido('historial')}"
+                                       th:data-postulacion-id="${postulacion.idPostulacion}"
+                                       data-tipo-documento="historial">
+                                <a th:href="@{'/uploads/' + ${postulacion.rutaHistorial}}" target="_blank" class="text-blue-600 hover:text-blue-900 flex items-center" title="Historial Académico">
+                                    <i class="fas fa-history fa-lg w-5"></i> <span class="ml-2 text-xs">Historial</span>
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex items-center space-x-2">
+                            <button type="button" class="btn-aprobar px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full hover:bg-green-600 disabled:opacity-50"
+                                    th:data-id="${postulacion.idPostulacion}"
+                                    th:disabled="${postulacion.estadoPostulacion.name() != 'EN_REVISION'}">Aprobar</button>
+                            <button type="button" class="btn-open-reject-modal px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full hover:bg-red-600 disabled:opacity-50"
+                                    th:data-id="${postulacion.idPostulacion}"
+                                    th:disabled="${postulacion.estadoPostulacion.name() != 'EN_REVISION'}">No Aprobar</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+  </div>
+
+  <!-- Modal para Rechazar Postulación -->
+  <div id="reject-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-lg">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">Motivo del Rechazo</h3>
+      
+      <div class="py-4">
+        <label for="motivo-rechazo" class="block text-sm font-medium text-gray-700">Motivo del Rechazo</label>
+        <textarea id="motivo-rechazo" name="motivoRechazo" rows="4" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm" placeholder="Escribe aquí por qué el estudiante no fue seleccionado..."></textarea>
+      </div>
+
+      <form id="reject-form">
+        <input type="hidden" id="reject-postulacion-id" name="postulacionId">
+        <!-- Checkboxes con los requisitos irán aquí -->
+      </form>
+
+      <div class="flex justify-end space-x-4 mt-6">
+        <button type="button" class="btn-cancel-reject bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Cancelar</button>
+        <button type="submit" form="reject-form" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Confirmar Rechazo</button>
+      </div>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    (function() { 
+        const tbody = document.getElementById('postulaciones-tbody');
+        if (!tbody) return;
+
+        const rejectModal = document.getElementById('reject-modal');
+        const rejectPostulacionIdInput = document.getElementById('reject-postulacion-id');
+
+        const updateApproveButtonState = (row) => {
+            const approveBtn = row.querySelector('.btn-aprobar');
+            const statusBadge = row.querySelector('.status-badge');
+            
+            // Solo gestionar botones para filas que están 'EN_REVISION'
+            if (!approveBtn || !statusBadge || statusBadge.textContent.trim() !== 'EN_REVISION') {
+                return;
+            }
+
+            const checkboxes = row.querySelectorAll('.doc-checkbox');
+            // Si no hay checkboxes, el botón debe estar habilitado (no hay nada que validar)
+            const allChecked = checkboxes.length === 0 || Array.from(checkboxes).every(cb => cb.checked);
+            
+            approveBtn.disabled = !allChecked;
+        };
+
+        const handleAction = async (id, action, row) => {
+            const url = `/coordinador/postulaciones/${id}/${action}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf_token"]')?.content
+                    }
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Ocurrió un error.');
+
+                const statusBadge = row.querySelector('.status-badge');
+                const approveBtn = row.querySelector('.btn-aprobar');
+                const rejectBtn = row.querySelector('.btn-open-reject-modal');
+
+                if (action === 'aprobar') {
+                    statusBadge.textContent = 'APROBADO';
+                    statusBadge.className = 'status-badge px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800';
+                }
+
+                if(approveBtn) approveBtn.disabled = true;
+                if(rejectBtn) rejectBtn.disabled = true;
+
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        };
+
+        tbody.addEventListener('click', function(event) {
+            const approveBtn = event.target.closest('.btn-aprobar');
+            if (approveBtn && !approveBtn.disabled) {
+                const row = approveBtn.closest('tr');
+                const checkboxes = row.querySelectorAll('.doc-checkbox');
+                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+                if (checkboxes.length > 0 && !allChecked) {
+                    alert('No se puede aprobar la postulación. Por favor, valide todos los documentos requeridos.');
+                    return;
+                }
+
+                const id = approveBtn.dataset.id;
+                handleAction(id, 'aprobar', row);
+            }
+
+            const openRejectModalBtn = event.target.closest('.btn-open-reject-modal');
+            if (openRejectModalBtn && !openRejectModalBtn.disabled) {
+                const id = openRejectModalBtn.dataset.id;
+                rejectPostulacionIdInput.value = id;
+                rejectModal.classList.remove('hidden');
+                rejectModal.classList.add('flex');
+            }
+        });
+
+        const cancelRejectBtn = document.querySelector('.btn-cancel-reject');
+        if(cancelRejectBtn) {
+            cancelRejectBtn.addEventListener('click', () => {
+                rejectModal.classList.add('hidden');
+                rejectModal.classList.remove('flex');
+            });
+        }
+        rejectModal.addEventListener('click', (e) => {
+            if (e.target === rejectModal) {
+                rejectModal.classList.add('hidden');
+                rejectModal.classList.remove('flex');
+            }
+        });
+
+        const handleCheckboxChange = async (checkbox) => {
+            const postulacionId = checkbox.dataset.postulacionId;
+            const tipoDocumento = checkbox.dataset.tipoDocumento;
+            const esValido = checkbox.checked;
+
+            const url = '/coordinador/postulaciones/documento/validar';
+            
+            const csrfToken = document.querySelector('meta[name="_csrf_token"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+            const headers = {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            const formData = new URLSearchParams();
+            formData.append('postulacionId', postulacionId);
+            formData.append('tipoDocumento', tipoDocumento);
+            formData.append('esValido', esValido);
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Ocurrió un error al actualizar el documento.');
+                
+                console.log(result.message);
+                // Actualizar el estado del botón de aprobación
+                updateApproveButtonState(checkbox.closest('tr'));
+
+            } catch (error) {
+                console.error('Error al validar documento:', error);
+                alert(`Error: ${error.message}`);
+                checkbox.checked = !esValido;
+            }
+        };
+
+        tbody.addEventListener('change', function(event) {
+            const checkbox = event.target.closest('.doc-checkbox');
+            if (checkbox) {
+                handleCheckboxChange(checkbox);
+            }
+        });
+
+        // Establecer el estado inicial de los botones de aprobación al cargar
+        tbody.querySelectorAll('tr').forEach(updateApproveButtonState);
+
+    })();
+    /*]]>*/
+  </script>
+</div>
+
+</body>
+</html>

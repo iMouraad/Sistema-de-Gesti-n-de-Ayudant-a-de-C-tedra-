@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content">
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">Plazas Disponibles para Postulación</h2>
+
+    <div class="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4">
+        <div class="flex">
+            <div class="py-1"><svg class="w-6 h-6 text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+            <div>
+                <h3 class="text-lg font-semibold text-blue-800">Requisitos para Postular</h3>
+                <p class="text-sm text-blue-700 mt-1">Asegúrate de tener los siguientes documentos y cumplir con las condiciones antes de postular:</p>
+                <ul class="list-disc list-inside text-sm text-blue-700 mt-2 space-y-1">
+                    <li><strong>Solicitud de postulación:</strong> Debes descargar, llenar y adjuntar este documento. <a th:href="@{/docs/SOLICITUD.pdf}" download="Solicitud_Postulacion_Ayudantia.pdf" class="font-bold text-blue-800 hover:underline">Descargar formato aquí</a>.</li>
+                    <li><strong>Copia de la cédula:</strong> Documento de identidad oficial vigente.</li>
+                    <li><strong>Certificado de matrícula:</strong> Que demuestre tu matriculación en el periodo académico actual.</li>
+                    <li><strong>Historial académico:</strong> Debe constar tu promedio y la aprobación de la asignatura a la que postulas.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${plazas.isEmpty()}" class="bg-white rounded-lg shadow-md p-6 text-center">
+      <p class="text-gray-600">En este momento, no hay plazas disponibles que cumplan con los requisitos para que puedas postular.</p>
+    </div>
+
+    <div th:unless="${plazas.isEmpty()}" class="bg-white rounded-lg shadow-md overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asignatura</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Docente</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cupos Disponibles</th>
+            <th scope="col" class="relative px-6 py-3">
+              <span class="sr-only">Acción</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr th:each="plaza : ${plazas}">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900" th:text="${plaza.asignaturaNombre}"></div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-500" th:text="${plaza.docenteNombre}"></div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 text-center font-bold" th:text="${plaza.cuposDisponibles}"></div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button type="button" th:attr="data-plaza-id=${plaza.plazaId}, data-asignatura-nombre=${plaza.asignaturaNombre}" class="open-modal-btn px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Postular
+                </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Postulación Modal -->
+  <div id="postulacion-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 transition-opacity duration-300">
+    <div class="bg-white rounded-lg shadow-xl p-6 sm:p-8 w-full max-w-lg transform transition-all duration-300 scale-95">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 class="text-xl sm:text-2xl font-bold text-gray-800">Postular a Ayudantía</h3>
+        <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+      </div>
+      <p class="text-sm text-gray-600 mb-1">Estás postulando para la asignatura:</p>
+      <p id="modal-asignatura-nombre" class="text-lg font-semibold text-blue-600 mb-6"></p>
+      
+      <form id="postulacion-form" th:action="@{/estudiante/postulacion/crear}" method="post" enctype="multipart/form-data">
+        <input type="hidden" id="modal-plaza-id" name="plazaId" />
+        
+        <div class="space-y-4">
+          <div>
+            <label for="file-solicitud" class="block text-sm font-medium text-gray-700">1. Solicitud de Postulación (PDF)</label>
+            <input type="file" id="file-solicitud" name="fileSolicitud" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required accept=".pdf"/>
+          </div>
+          <div>
+            <label for="file-cedula" class="block text-sm font-medium text-gray-700">2. Copia de Cédula (PDF)</label>
+            <input type="file" id="file-cedula" name="fileCedula" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required accept=".pdf"/>
+          </div>
+          <div>
+            <label for="file-matricula" class="block text-sm font-medium text-gray-700">3. Certificado de Matrícula (PDF)</label>
+            <input type="file" id="file-matricula" name="fileMatricula" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required accept=".pdf"/>
+          </div>
+          <div>
+            <label for="file-historial" class="block text-sm font-medium text-gray-700">4. Historial Académico (PDF)</label>
+            <input type="file" id="file-historial" name="fileHistorial" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required accept=".pdf"/>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-4 mt-8">
+          <button type="button" id="cancel-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-md">Cancelar</button>
+          <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md">Confirmar y Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  
+</div>
+
+</body>
+</html>
