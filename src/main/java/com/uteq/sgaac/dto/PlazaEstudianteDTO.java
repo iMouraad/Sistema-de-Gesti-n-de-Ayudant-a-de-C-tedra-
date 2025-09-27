@@ -1,0 +1,70 @@
+package com.uteq.sgaac.dto;
+
+public class PlazaEstudianteDTO {
+
+    private Long plazaId;
+    private String asignaturaNombre;
+    private String docenteNombre;
+    private Integer cuposDisponibles;
+    private String carreraNombre;
+    private String periodo;
+
+    public PlazaEstudianteDTO(Long plazaId, String asignaturaNombre, String docenteNombre, Integer cuposDisponibles, String carreraNombre, String periodo) {
+        this.plazaId = plazaId;
+        this.asignaturaNombre = asignaturaNombre;
+        this.docenteNombre = docenteNombre;
+        this.cuposDisponibles = cuposDisponibles;
+        this.carreraNombre = carreraNombre;
+        this.periodo = periodo;
+    }
+
+    // Getters and Setters
+
+    public Long getPlazaId() {
+        return plazaId;
+    }
+
+    public void setPlazaId(Long plazaId) {
+        this.plazaId = plazaId;
+    }
+
+    public String getAsignaturaNombre() {
+        return asignaturaNombre;
+    }
+
+    public void setAsignaturaNombre(String asignaturaNombre) {
+        this.asignaturaNombre = asignaturaNombre;
+    }
+
+    public String getDocenteNombre() {
+        return docenteNombre;
+    }
+
+    public void setDocenteNombre(String docenteNombre) {
+        this.docenteNombre = docenteNombre;
+    }
+
+    public Integer getCuposDisponibles() {
+        return cuposDisponibles;
+    }
+
+    public void setCuposDisponibles(Integer cuposDisponibles) {
+        this.cuposDisponibles = cuposDisponibles;
+    }
+
+    public String getCarreraNombre() {
+        return carreraNombre;
+    }
+
+    public void setCarreraNombre(String carreraNombre) {
+        this.carreraNombre = carreraNombre;
+    }
+
+    public String getPeriodo() {
+        return periodo;
+    }
+
+    public void setPeriodo(String periodo) {
+        this.periodo = periodo;
+    }
+}

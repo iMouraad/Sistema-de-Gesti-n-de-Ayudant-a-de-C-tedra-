@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Columna de Requisitos -->
+        <div class="lg:col-span-1 bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Requisitos para Postular</h2>
+            <p class="text-gray-600 mb-6">Asegúrate de cumplir con las condiciones y tener los siguientes documentos antes de postular:</p>
+
+            <div th:if="${not #lists.isEmpty(requisitos)}">
+                <!-- Requisitos Reglamentarios -->
+                <h3 class="font-semibold text-lg text-gray-700 mb-3">Condiciones Reglamentarias:</h3>
+                <ul class="space-y-2 mb-6">
+                    <th:block th:each="req : ${requisitos}" th:if="${req.tipo == 'REGLAMENTARIO'}">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span class="text-gray-700" th:text="${req.descripcion}"></span>
+                        </li>
+                    </th:block>
+                </ul>
+
+                <!-- Documentos Obligatorios -->
+                <h3 class="font-semibold text-lg text-gray-700 mb-3">Documentos a Presentar:</h3>
+                <ul class="space-y-4">
+                     <th:block th:each="req : ${requisitos}" th:if="${req.tipo == 'DOCUMENTO_OBLIGATORIO' or req.tipo == 'DOCUMENTO_OPCIONAL'}">
+                        <li class="p-3 bg-gray-50 rounded-lg">
+                            <div class="font-bold text-gray-800">
+                                <span th:text="${req.descripcion}"></span>
+                                <span th:if="${req.tipo == 'DOCUMENTO_OPCIONAL'}" class="text-xs font-normal text-gray-500">(Opcional)</span>
+                            </div>
+                            <a th:if="${req.urlPlantilla}" th:href="@{${req.urlPlantilla}}" target="_blank" class="text-sm text-indigo-600 hover:underline">Descargar formato aquí <i class="fas fa-download ml-1"></i></a>
+                        </li>
+                    </th:block>
+                </ul>
+            </div>
+             <div th:if="${#lists.isEmpty(requisitos)}">
+                <p class="text-center text-gray-500">No hay requisitos configurados por el administrador.</p>
+            </div>
+        </div>
+
+        <!-- Columna de Plazas -->
+        <div class="lg:col-span-2">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Plazas Disponibles para Postulación</h2>
+            <div class="space-y-4">
+                <div th:if="${#lists.isEmpty(plazas)}" class="text-center py-10 px-6 bg-white rounded-lg shadow-md">
+                    <i class="fas fa-info-circle text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600">No hay plazas disponibles para postulación en este momento.</p>
+                </div>
+
+                <div th:each="plaza : ${plazas}" class="bg-white p-5 rounded-lg shadow-md flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-indigo-700" th:text="${plaza.asignaturaNombre}"></h3>
+                        <p class="text-sm text-gray-600" th:text="${plaza.carreraNombre}"></p>
+                        <p class="text-xs text-gray-500 mt-1" th:text="${plaza.periodo}"></p>
+                    </div>
+                    <button class="open-modal-btn bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg"
+                            th:data-plaza-id="${plaza.plazaId}"
+                            th:data-asignatura-nombre="${plaza.asignaturaNombre}">
+                        Postular
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Postulación -->
+    <div id="postulacion-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl transform scale-95 transition-transform duration-300">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Confirmar Postulación</h2>
+            <p class="text-gray-600 mb-6">Estás a punto de postularte para la ayudantía de: <strong id="modal-asignatura-nombre" class="text-indigo-700"></strong>.</p>
+            
+            <form th:action="@{/estudiante/postulacion/crear}" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="plazaId" id="modal-plaza-id">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="file-solicitud" class="block text-sm font-medium text-gray-700">1. Solicitud de Postulación (PDF)</label>
+                        <input type="file" name="fileSolicitud" id="file-solicitud" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required>
+                    </div>
+                    <div>
+                        <label for="file-cedula" class="block text-sm font-medium text-gray-700">2. Copia de Cédula (PDF)</label>
+                        <input type="file" name="fileCedula" id="file-cedula" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required>
+                    </div>
+                    <div>
+                        <label for="file-matricula" class="block text-sm font-medium text-gray-700">3. Certificado de Matrícula (PDF)</label>
+                        <input type="file" name="fileMatricula" id="file-matricula" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required>
+                    </div>
+                    <div>
+                        <label for="file-historial" class="block text-sm font-medium text-gray-700">4. Historial Académico (PDF)</label>
+                        <input type="file" name="fileHistorial" id="file-historial" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-4 mt-8">
+                    <button id="cancel-btn" type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">Enviar Postulación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

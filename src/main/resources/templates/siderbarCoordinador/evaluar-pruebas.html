@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Evaluar Pruebas de Oposición</h1>
+        
+        <div th:if="${pruebas.isEmpty()}" class="bg-white p-6 rounded-lg shadow-md text-center">
+            <p class="text-gray-600">No hay pruebas de oposición pendientes de evaluación en este momento.</p>
+        </div>
+
+        <div th:unless="${pruebas.isEmpty()}" class="bg-white p-6 rounded-lg shadow-md">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Título de la Prueba</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estudiante</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asignatura</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr th:each="prueba : ${pruebas}">
+                            <td class="px-6 py-4 whitespace-nowrap" th:text="${prueba.titulo}"></td>
+                            <td class="px-6 py-4 whitespace-nowrap" th:text="${prueba.postulacion.estudiante.usuario.nombres} + ' ' + ${prueba.postulacion.estudiante.usuario.apellidos}"></td>
+                            <td class="px-6 py-4 whitespace-nowrap" th:text="${prueba.postulacion.asignatura.nombre}"></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button type="button" th:data-id="${prueba.idOposicion}" class="evaluar-btn bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Evaluar</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Evaluar -->
+    <div id="evaluarPruebaModal" class="fixed z-50 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+                <div id="modal-content-wrapper" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <!-- El contenido del formulario se cargará aquí -->
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="submit-evaluacion-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                        Guardar y Finalizar Evaluación
+                    </button>
+                    <button type="button" class="close-modal-btn mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        (function() {
+            const modal = document.getElementById('evaluarPruebaModal');
+            if (!modal) return;
+
+            const openModalBtns = document.querySelectorAll('.evaluar-btn');
+            const modalContentWrapper = document.getElementById('modal-content-wrapper');
+
+            function openModal(pruebaId) {
+                const url = `/coordinador/oposicion/${pruebaId}/evaluar-modal`;
+                modalContentWrapper.innerHTML = '<p class="text-center p-8">Cargando formulario...</p>';
+                modal.classList.remove('hidden');
+
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) throw new Error('No se pudo cargar el formulario de evaluación.');
+                        return response.text();
+                    })
+                    .then(html => {
+                        modalContentWrapper.innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error('Error al cargar el modal:', error);
+                        modalContentWrapper.innerHTML = '<p class="text-center p-8 text-red-500">Error al cargar el formulario.</p>';
+                    });
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                modalContentWrapper.innerHTML = ''; // Limpiar contenido al cerrar
+            }
+
+            openModalBtns.forEach(btn => {
+                btn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const pruebaId = event.currentTarget.getAttribute('data-id');
+                    openModal(pruebaId);
+                });
+            });
+
+            // Usar delegación de eventos para los botones del modal
+            modal.addEventListener('click', function(event) {
+                // Botón de Cerrar/Cancelar
+                if (event.target.classList.contains('close-modal-btn')) {
+                    closeModal();
+                }
+                // Botón de Guardar
+                if (event.target.id === 'submit-evaluacion-btn') {
+                    console.log('Botón Guardar clickeado.'); // Debug log
+                    event.preventDefault();
+                    const form = document.getElementById('evaluacionForm');
+                    if (!form) {
+                        alert('Error: No se encontró el formulario.');
+                        return;
+                    }
+
+                    const formData = new FormData(form);
+                    const url = form.action;
+
+                    fetch(url, {
+                        method: 'POST',
+                        body: new URLSearchParams(formData)
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('¡Evaluación guardada con éxito!');
+                            window.location.reload();
+                        } else {
+                            alert('Error al guardar la evaluación. Revisa la consola del backend.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error de red:', error);
+                        alert('Error de red al intentar guardar la evaluación.');
+                    });
+                }
+                // Cerrar si se hace clic en el fondo oscuro
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+        })();
+        /*]]>*/
+    </script>
+</div>
+</body>
+</html>
